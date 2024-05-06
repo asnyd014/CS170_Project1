@@ -1,7 +1,9 @@
 #include <vector>
 #include <queue>
+#include <set>
 #include <algorithm>
 #include <numeric>
+#include <iostream>
 
 // To be passed in when constructing a Problem object. 
 // UCS = Uniform Cost Search
@@ -16,11 +18,13 @@ struct SolutionNode {
     SolutionNode* parent = nullptr;
     int g_n;
     int h_n;
-};
 
-struct CompareNode {
-    bool operator() (SolutionNode const& n1, SolutionNode const& n2) {
-        return (n1.g_n + n1.h_n) + (n2.g_n + n2.h_n);
+    bool operator() (const SolutionNode& n1, const SolutionNode& n2) const {
+        return (n1.g_n + n1.h_n) > (n2.g_n + n2.h_n);
+    }
+    
+    bool operator< (SolutionNode& n) const {
+        return (this->g_n + this->h_n) > (n.g_n + n.h_n);
     }
 };
 
@@ -63,7 +67,7 @@ class Problem {
 
         // Operators
         // These will check validity of operations and only add valid nodes to the provided frontier
-        void blankLeft(SolutionNode& currNode, std::priority_queue<SolutionNode, std::vector<SolutionNode>, CompareNode>& frontier, int blankIndex) {
+        void blankLeft(SolutionNode& currNode, std::priority_queue<SolutionNode, std::vector<SolutionNode>, SolutionNode>& frontier, std::set<SolutionNode, SolutionNode>& frontierRecord, std::set<SolutionNode, SolutionNode>& explored, int blankIndex) {
             if ((blankIndex + 1) % probColumns != 1) { // Check if blank is already on left edge
                 // Create new node
                 SolutionNode newNode;
@@ -76,12 +80,15 @@ class Problem {
                 // Calculate new node's heuristic
                 calcHeuristic(newNode);
 
-                // Push new node to frontier
-                frontier.push(newNode);
+                // Check if node exists in frontierRecord or explored
+                if (frontierRecord.count(newNode) == 0 || explored.count(newNode) == 0) {
+                    // Push new node to frontier
+                    frontier.push(newNode);
+                }
             }
         }
 
-        void blankRight(SolutionNode& currNode, std::priority_queue<SolutionNode, std::vector<SolutionNode>, CompareNode>& frontier, int blankIndex) {
+        void blankRight(SolutionNode& currNode, std::priority_queue<SolutionNode, std::vector<SolutionNode>, SolutionNode>& frontier, std::set<SolutionNode, SolutionNode>& frontierRecord, std::set<SolutionNode, SolutionNode>& explored, int blankIndex) {
             if ((blankIndex + 1) % probColumns != 0) { // Check if blank is already on right edge
                 // Create new node
                 SolutionNode newNode;
@@ -94,12 +101,15 @@ class Problem {
                 // Calculate new node's heuristic
                 calcHeuristic(newNode);
 
-                // Push new node to frontier
-                frontier.push(newNode);
+                // Check if node exists in frontierRecord or explored
+                if (frontierRecord.count(newNode) == 0 || explored.count(newNode) == 0) {    
+                    // Push new node to frontier
+                    frontier.push(newNode);
+                }
             }
         }
 
-        void blankUp(SolutionNode& currNode, std::priority_queue<SolutionNode, std::vector<SolutionNode>, CompareNode>& frontier, int blankIndex) {
+        void blankUp(SolutionNode& currNode, std::priority_queue<SolutionNode, std::vector<SolutionNode>, SolutionNode>& frontier, std::set<SolutionNode, SolutionNode>& frontierRecord, std::set<SolutionNode, SolutionNode>& explored, int blankIndex) {
             if ((blankIndex + 1) > probColumns) { // Check if blank is already on top edge
                 // Create new node
                 SolutionNode newNode;
@@ -112,12 +122,15 @@ class Problem {
                 // Calculate new node's heuristic
                 calcHeuristic(newNode);
 
-                // Push new node to frontier
-                frontier.push(newNode);
+                // Check if node exists in frontierRecord or explored
+                if (frontierRecord.count(newNode) == 0 || explored.count(newNode) == 0) {    
+                    // Push new node to frontier
+                    frontier.push(newNode);
+                }
             }
         }
 
-        void blankDown(SolutionNode& currNode, std::priority_queue<SolutionNode, std::vector<SolutionNode>, CompareNode>& frontier, int blankIndex) {
+        void blankDown(SolutionNode& currNode, std::priority_queue<SolutionNode, std::vector<SolutionNode>, SolutionNode>& frontier, std::set<SolutionNode, SolutionNode>& frontierRecord, std::set<SolutionNode, SolutionNode>& explored, int blankIndex) {
             if ((blankIndex + 1) <= (probColumns * (probRows - 1))) { // Check if blank is already on bottom edge
                 // Create new node
                 SolutionNode newNode;
@@ -130,8 +143,11 @@ class Problem {
                 // Calculate new node's heuristic
                 calcHeuristic(newNode);
 
-                // Push new node to frontier
-                frontier.push(newNode);
+                // Check if node exists in frontierRecord or explored
+                if (frontierRecord.count(newNode) == 0 || explored.count(newNode) == 0) {    
+                    // Push new node to frontier
+                    frontier.push(newNode);
+                }
             }
         }
 
@@ -143,27 +159,32 @@ class Problem {
 
             // Fill goal state with sequential values starting with 1 and ending with 0
             int totalSpace = probColumns * probRows;
-            goalState.reserve(totalSpace);
-            std::iota(goalState.begin(), goalState.end()-1, 1);
-            goalState[goalState.size()-1] = 0;
+            int inc = 1;
+            for (int i = 0; i < totalSpace-1; ++i) {
+                goalState.push_back(inc);
+                ++inc;
+            }
+            goalState.push_back(0);
         }
 
         // Accessors
+        int getColumnCount() { return probColumns; }
+        int getRowCount() { return probRows; }
         std::vector<int> getInitialState() { return initialState; }
         std::vector<int> getGoalState() { return goalState; }
 
         // Expansion Function
         // To be called from driver code
-        void expandNode(SolutionNode& currNode, std::priority_queue<SolutionNode, std::vector<SolutionNode>, CompareNode>& frontier) {
+        void expandNode(SolutionNode& currNode, std::priority_queue<SolutionNode, std::vector<SolutionNode>, SolutionNode>& frontier, std::set<SolutionNode, SolutionNode>& frontierRecord, std::set<SolutionNode, SolutionNode>& explored) {
             // Find index of blank space
             int blankIndex = 0;
             for (int i = 0; i < currNode.state.size(); ++i) {
                 if (currNode.state[i] == 0) { blankIndex = i; }
             }
 
-            blankLeft(currNode, frontier, blankIndex);
-            blankRight(currNode, frontier, blankIndex);
-            blankUp(currNode, frontier, blankIndex);
-            blankDown(currNode, frontier, blankIndex);
+            blankLeft(currNode, frontier, frontierRecord, explored, blankIndex);
+            blankRight(currNode, frontier, frontierRecord, explored, blankIndex);
+            blankUp(currNode, frontier, frontierRecord, explored, blankIndex);
+            blankDown(currNode, frontier, frontierRecord, explored, blankIndex);
         }
 };
