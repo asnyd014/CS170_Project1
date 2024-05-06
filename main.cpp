@@ -6,7 +6,7 @@ using namespace std;
 
 enum algorithm { UCS, AMT, AED };
 
-void getUserInput(vector<int>& startState, algorithm& selectedAlgorithm) {
+void getUserInput(vector<int>& initialState, algorithm& selectedAlgorithm) {
     int choice, algorithmChoice;
 
     //prompt user for puzzle selection
@@ -16,22 +16,22 @@ void getUserInput(vector<int>& startState, algorithm& selectedAlgorithm) {
 
     //read the puzzle design based on the user choice
     if (choice == 1) {  //using default puzzle given in sample pdf
-        startState = { 1, 2, 3, 4, 8, 0, 7, 6, 5 };
+        initialState = { 1, 2, 3, 4, 8, 0, 7, 6, 5 };
     }
     else if (choice == 2) {  //user's own puzzle
         cout << "Enter your puzzle, use a zero to represent the blank\n";
         cout << "Enter the first row, use space or tabs between numbers: ";
-        startState.resize(9); 
+        initialState.resize(9); 
         for (int i = 0; i < 3; ++i) {   //1st row
-            cin >> startState[i];
+            cin >> initialState[i];
         }
         cout << "Enter the second row, use space or tabs between numbers: ";
         for (int i = 3; i < 6; ++i) {   //2nd row
-            cin >> startState[i];
+            cin >> initialState[i];
         }
         cout << "Enter the third row, use space or tabs between numbers: ";
         for (int i = 6; i < 9; ++i) {   //3rd row
-            cin >> startState[i];
+            cin >> initialState[i];
         }
     }
     else {  //invalid choice
@@ -63,11 +63,11 @@ void getUserInput(vector<int>& startState, algorithm& selectedAlgorithm) {
 }
 
 int main() {
-    vector<int> startState;
+    vector<int> initialState;
     algorithm selectedAlgorithm;
 
-    getUserInput(startState, selectedAlgorithm);  //get the user input
-    //startState: a vector that stores the order of the tiles on the puzzle board
+    getUserInput(initialState, selectedAlgorithm);  //get the user input
+    //initialState: a vector that stores the order of the tiles on the puzzle board
     //selectedAlgorithm: stores the user's choice of the algorithm
 
     
