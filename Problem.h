@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <numeric>
 #include <iostream>
+#include <cmath>
 
 // To be passed in when constructing a Problem object. 
 // UCS = Uniform Cost Search
@@ -50,13 +51,16 @@ class Problem {
                     newNode.h_n = 0;
                     break;
                 case AMT: // A* with Misplaced Tile
-                    
-                    // TODO
-
+                    // Check if values at each index of the current state and the goal state match
+                    // If they do not, increment number of misplaced tiles by one
+                    newNode.h_n = 0;
+                    for (int i = 0; i < newNode.state.size(); ++i) {
+                        if (newNode.state[i] != goalState[i]) { ++newNode.h_n; }
+                    }
                     break;
                 case AED: // A* with Euclidean Distance
                     
-                    // TODO
+                    /
 
                     break;
                 default: // Just apply UCS by default

@@ -1,5 +1,4 @@
 #include "Problem.h"
-#include <iostream>
 
 using namespace std;
 
