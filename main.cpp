@@ -2,7 +2,7 @@
 
 using namespace std;
 
-SolutionNode* graph_search(Problem pr, int& maxNodes, int& numExpanded);
+SolutionNode graph_search(Problem pr, int& maxNodes, int& numExpanded);
 
 void getUserInput(vector<int>& initialState, algorithm& selectedAlgorithm) {
     int choice, algorithmChoice;
@@ -65,16 +65,20 @@ int main() {
     algorithm selectedAlgorithm;
     int maxNodes = 0;
     int numExpanded = 0;
+    int solutionDepth = 0;
 
     getUserInput(initialState, selectedAlgorithm);
     
     // Construct new Problem object using provided input
     Problem pr(initialState, selectedAlgorithm);
 
-    SolutionNode* solution = graph_search(pr, maxNodes, numExpanded);
+    SolutionNode solution = graph_search(pr, maxNodes, numExpanded);
     
-    if (solution) {
+    if (solution.g_n >= 0) {
         cout << "Success" << endl;
+        cout << "Number of expanded nodes: " << numExpanded << endl;
+        cout << "Maximum number of nodes in frontier: " << maxNodes << endl;
+        cout << "Depth of goal node: " << solution.g_n << endl;
     }
     else {
         cout << "Failure" << endl;
@@ -83,14 +87,19 @@ int main() {
     return 0;
 }
 
-SolutionNode* graph_search(Problem pr, int& maxNodes, int& numExpanded) {
+SolutionNode graph_search(Problem pr, int& maxNodes, int& numExpanded) {
+    bool firstNode = true;
     // Set up frontier and explored sets
     std::priority_queue<SolutionNode, std::vector<SolutionNode>, SolutionNode> frontier;
     std::set<SolutionNode, SolutionNode> frontierRecord; // Used for determining if nodes already exist in frontier
     std::set<SolutionNode, SolutionNode> explored;
 
-    // Create pointer to return with
-    SolutionNode* solution = nullptr;
+    // Create node to indicate failure
+    SolutionNode failNode;
+    failNode.g_n = -1;
+
+    // Create node to return with
+    SolutionNode solution;
 
     // Create temporary pointer to maintain reference to node
     // while between frontier and explored sets
@@ -102,11 +111,22 @@ SolutionNode* graph_search(Problem pr, int& maxNodes, int& numExpanded) {
     rootNode.g_n = 0;
     rootNode.h_n = 0;
 
+    // Output information for initial node
+    cout << "\nExpanding State" << endl;
+    for (int i = 0; i < rootNode.state.size();) {
+        for (int j = 0; j < pr.getColumnCount(); ++j) {
+            cout << rootNode.state[i] << " ";
+            ++i;
+        }
+        cout << endl;
+    }
+    cout << endl;
+
     // Push initial state node to frontier
     frontier.push(rootNode);
 
     while (1) {
-        if (frontier.empty()) { break; } // Break out of loop if frontier is empty
+        if (frontier.empty()) { solution = failNode; break; } // Break out of loop if frontier is empty
 
         // Check number of nodes in frontier, update count if applicable
         if (frontier.size() > maxNodes) { maxNodes = frontier.size(); }
@@ -119,22 +139,27 @@ SolutionNode* graph_search(Problem pr, int& maxNodes, int& numExpanded) {
 
         // Check if state of node matches goal, return solution if it does
         if (temp.state == pr.getGoalState()) {
-            solution = &temp;
+            solution = temp;
             break;
         }
 
         // Add node to explored set
         explored.insert(temp);
 
-        // Expand node
-        cout << "Expanding State with g(n) = " << temp.g_n << " and h(n) = " << temp.h_n << endl;
-        for (int i = 0; i < temp.state.size();) {
-            for (int j = 0; j < pr.getColumnCount(); ++j) {
-                cout << temp.state[i] << " ";
-                ++i;
+        if (!firstNode) { // Don't output on first node
+            // Expand node
+            cout << "Expanding State with g(n) = " << temp.g_n << " and h(n) = " << temp.h_n << endl;
+            for (int i = 0; i < temp.state.size();) {
+                for (int j = 0; j < pr.getColumnCount(); ++j) {
+                    cout << temp.state[i] << " ";
+                    ++i;
+                }
+                cout << endl;
             }
             cout << endl;
         }
+        firstNode = false;    
+
         ++numExpanded;
         pr.expandNode(temp, frontier, frontierRecord, explored);
     }

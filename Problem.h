@@ -17,7 +17,7 @@ enum algorithm { UCS, AMT, AED };
 struct SolutionNode {
     std::vector<int> state;
     SolutionNode* parent = nullptr;
-    float g_n;
+    int g_n;
     float h_n;
 
     bool operator() (const SolutionNode& n1, const SolutionNode& n2) const {
